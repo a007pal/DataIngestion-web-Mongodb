@@ -1,4 +1,4 @@
-package property.view.tracker;
+package property.view.tracker.filter;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpResponse;
