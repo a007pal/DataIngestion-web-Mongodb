@@ -1,15 +1,37 @@
-Thumbs.db
-.DS_Store
-.gradle
-build/
+# Build outputs
+/build/
 target/
-out/
-.micronaut/
-.idea
+*.class
+*.jar
+*.war
+*.log
+
+# Lambda ZIPs (if built here)
+property-view-tracker-*.zip
+
+# Gradle
+.gradle/
+build/
+*.lock
+
+# IDE
+.idea/
+.vscode/
 *.iml
-*.ipr
-*.iws
-.project
-.settings
-.classpath
-.factorypath
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Optional (you may or may not ignore this)
+# If you want to keep lockfile for team, don't ignore this:
+# .terraform.lock.hcl

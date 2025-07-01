@@ -24,6 +24,10 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
     policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
   
 }
+resource "aws_iam_role_policy_attachment" "lambda_vpc_execution" {
+  role = aws_iam_role.lambda_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
 
 resource "aws_lambda_function" "micronaut_lambda" {
   filename = "property-view-tracker-0.1-lambda.zip"
@@ -33,6 +37,10 @@ resource "aws_lambda_function" "micronaut_lambda" {
   source_code_hash = filebase64sha256("property-view-tracker-0.1-lambda.zip")
   runtime = "provided.al2023"
   architectures = ["x86_64"]
+  vpc_config {
+    security_group_ids = [aws_security_group.lambda_sg.id]
+    subnet_ids = [aws_subnet.private_subnet.id]
+  }
 
   environment {
     variables = {
@@ -42,6 +50,10 @@ resource "aws_lambda_function" "micronaut_lambda" {
   }
   timeout = 240
   memory_size = 512
+  lifecycle {
+  create_before_destroy = true
+  ignore_changes        = [vpc_config]
+}
 }
 
 #Api GateWay Start
@@ -69,7 +81,16 @@ resource "aws_apigatewayv2_integration" "lambda_intergration" {
   integration_method     = "POST" // This is correct for Lambda proxy integration, even for GET routes
   payload_format_version = "2.0"
 }
-
+resource "aws_apigatewayv2_authorizer" "auth0_authorizer" {
+  name = "${var.funtion_name}-auth0-authorizer"
+  api_id = aws_apigatewayv2_api.api.id
+  authorizer_type = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  jwt_configuration {
+    audience = [var.audience]
+    issuer = var.issuer
+  }  
+}
 # resource "aws_apigatewayv2_route" "lambda_route" {
 #   api_id    = aws_apigatewayv2_api.api.id
 #   route_key = "GET /property/{id}"
@@ -79,6 +100,8 @@ resource "aws_apigatewayv2_route" "lambda_route" {
   api_id    = aws_apigatewayv2_api.api.id
   route_key = "POST /property/view"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_intergration.id}"
+  authorization_type = "JWT"
+  authorizer_id = aws_apigatewayv2_authorizer.auth0_authorizer.id
 }
 
 

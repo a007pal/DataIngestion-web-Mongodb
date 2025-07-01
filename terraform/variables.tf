@@ -9,3 +9,10 @@ variable "environment" {
   default = "dev"
   
 }
+variable "audience" {
+  default = "https://property-api-view"
+}
+variable "issuer" {
+  default = "https://dev-bsim80vi1m.us.auth0.com/"
+  
+}

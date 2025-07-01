@@ -1,16 +1,13 @@
-# Local .terraform directories
+# Terraform init & state
 .terraform/
-
-# Terraform state files
 *.tfstate
 *.tfstate.*
-
-# Crash log files
-crash.log
-
-# Sensitive variable files
 *.tfvars
 *.tfvars.json
+*.plan
+
+# Lock file (optional)
+.terraform.lock.hcl
 
 # Override files
 override.tf
@@ -18,11 +15,11 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
-# Plan output
-*.plan
+# Sensitive files
+*.pem
+*.key
+*.secret
 
-# Ignore .DS_Store and Thumbs.db
+# OS
 .DS_Store
 Thumbs.db
-terraform/.terraform.lock.hcl
-property-view-tracker-0.1-lambda.zip
