@@ -69,5 +69,3 @@ tasks.named("dockerfileNative") {
         "-Dio.netty.noPreferDirect=true"
     )
 }
-
-

@@ -1,74 +1,91 @@
 provider "aws" {
   region = var.region
 }
-#Aws Lambda
-resource "aws_iam_role" "lambda_execution_role" {
-    name = "${var.funtion_name}-execution-role"
-    assume_role_policy = jsonencode({
-        Version = "2012-10-17",
-        Statement = [
-            {
-                Action = "sts:AssumeRole",
-                Effect = "Allow",
-                Principal = {
-                    Service = "lambda.amazonaws.com"
-                }
-            }
-        ]
-
-    })
+module "vpc" {
+source = "./modules/vpc"
+name_prefix = var.name_prefix
+vpc_cidr =   var.vpc_cidr
+azs = var.azs
+tags = var.tags
+private_subnet_cidrs = var.private_subnet_cidrs
+public_subnet_cidrs = var.public_subnet_cidrs
   
 }
-resource "aws_iam_role_policy_attachment" "lambda_logs" {
-    role = aws_iam_role.lambda_execution_role.name
-    policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  
+
+/* module "zookeeper" {
+  source               = "./modules/zookeeper"
+  ami_id              = var.ami_id
+  instance_type       = var.instance_type
+  subnet_ids          = module.vpc.private_subnet_ids
+  key_name            = var.key_name
+  sg_id               = var.sg_zookeeper
+  zookeeper_count     = var.zookeeper_count
+  keystore_password   = var.keystore_password
+  truststore_password = var.truststore_password
+  tags                = var.tags
+} */
+
+/* module "kafka_brokers" {
+  source               = "./modules/kafka_brokers"
+  ami_id              = var.ami_id
+  instance_type       = var.instance_type
+  subnet_ids          = module.vpc.private_subnet_ids
+  key_name            = var.key_name
+  sg_id               = var.sg_kafka
+  broker_count        = var.broker_count
+  zookeeper_connect   = module.zookeeper.zookeeper_connection_string
+  keystore_password   = var.keystore_password
+  truststore_password = var.truststore_password
+  min_insync_replicas = var.min_insync_replicas
+  name_prefix         = var.name_prefix
+  tags                = var.tags
+} */
+
+/* module "schema_registry" {
+  source               = "./modules/schema_registry"
+  ami_id              = var.ami_id
+  instance_type       = var.instance_type
+  subnet_id           = module.vpc.private_subnet_ids[0]
+  key_name            = var.key_name
+  sg_id               = var.sg_schema_registry
+  bootstrap_servers   = module.kafka_brokers.bootstrap_servers
+  keystore_password   = var.keystore_password
+  truststore_password = var.truststore_password
+  tags                = var.tags
+} */
+
+module "lambda_producer" {
+  source            = "./modules/lambda_producer"
+  function_name     = var.lambda_function_name
+  environment       = var.environment
+  sasl_secret_arn   = var.sasl_secret_arn
+  tls_secret_arn    = var.tls_secret_arn
+  sg_lambda = [module.vpc.lambda_sg_id]
+  private_subnet_ids = module.vpc.private_subnet_ids
+  depends_on = [ module.vpc ]
 }
-resource "aws_iam_role_policy_attachment" "lambda_vpc_execution" {
-  role = aws_iam_role.lambda_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+
+module "apigateway" {
+  source           = "./modules/apigateway"
+  environment      = var.environment
+  audience         = var.auth0_audience
+  issuer           = var.auth0_issuer
+  tags = "${var.name_prefix}-${var.environment}-api-gateway"
+  lambda_function_name_arn = module.lambda_producer.lambda_function_arn
+  lambda_invoke_arn = module.lambda_producer.lambda_invoke_arn
+  funtion_name = module.lambda_producer.lambda_function_name
+  depends_on = [ module.lambda_producer ]
 }
 
-resource "aws_lambda_function" "micronaut_lambda" {
-  filename = "property-view-tracker-0.1-lambda.zip"
-  function_name = var.funtion_name
-  role = aws_iam_role.lambda_execution_role.arn
-  handler = "io.micronaut.function.aws.runtime.APIGatewayV2HTTPEventMicronautLambdaRuntime"
-  source_code_hash = filebase64sha256("property-view-tracker-0.1-lambda.zip")
-  runtime = "provided.al2023"
-  architectures = ["x86_64"]
-  #publish = true
-  vpc_config {
-    security_group_ids = [aws_security_group.lambda_sg.id]
-    subnet_ids = [aws_subnet.private_subnet.id]
-  }
-
-  environment {
-    variables = {
-      "MICRONAUT_ENVIRONMENTS" = var.environment
-      API_STAGE= var.environment
-    }
-  }
-  timeout = 240
-  memory_size = 512
-  lifecycle {
-  create_before_destroy = true
-  ignore_changes        = [vpc_config]
-}
+/*  module "monitoring" {
+  source            = "./modules/monitoring"
+  ami_id            = var.ami_id
+  instance_type     = var.instance_type
+  subnet_id         = module.vpc.public_subnet_ids[0]
+  key_name          = var.key_name
+  sg_id             = var.sg_monitoring
+  bootstrap_servers = module.kafka_brokers.bootstrap_servers
+  tags              = var.tags
 }
 
-# resource "aws_lambda_alias" "dev" {
-#   name = "dev"
-#   function_name = aws_lambda_function.micronaut_lambda.function_name
-#   function_version = aws_lambda_function.micronaut_lambda.version
-# }
-
-# resource "aws_lambda_provisioned_concurrency_config" "micronaut_lambda_pc" {
-#   function_name = aws_lambda_function.micronaut_lambda.function_name
-#   qualifier = aws_lambda_alias.dev.name
-#   provisioned_concurrent_executions = 1
-#     depends_on = [
-#     aws_lambda_alias.dev
-#   ]
-# }
-
+ */
