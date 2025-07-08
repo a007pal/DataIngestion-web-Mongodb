@@ -76,6 +76,14 @@ module "apigateway" {
   funtion_name = module.lambda_producer.lambda_function_name
   depends_on = [ module.lambda_producer ]
 }
+module "secretsmanager" {
+  source = "./modules/secretsmanager"
+  zk_instance_count = var.zookeeper_count
+  name_prefix = var.name_prefix
+  zookeer_secret_name_prefix = var.zookeer_secret_name_prefix
+  environment = var.environment
+  certs_path = var.certs_path_zoopkeeper
+}
 
 /*  module "monitoring" {
   source            = "./modules/monitoring"

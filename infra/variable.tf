@@ -38,3 +38,9 @@ variable "public_subnet_cidrs" {
 variable "private_subnet_cidrs" {
   type = list(string)
 }
+variable "zookeer_secret_name_prefix" {
+  type = string
+}
+variable "certs_path_zoopkeeper" {
+  type = string
+}

@@ -2,8 +2,6 @@ package property.view.tracker.controller;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.*;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import property.view.tracker.data.PropertyView;
 import property.view.tracker.data.ResponseBody;
 
