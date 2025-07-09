@@ -17,3 +17,7 @@ output "lambda_sg_id" {
 output "kafka_sg_id" {
   value = aws_security_group.kafka.id
 }
+output "zookeeper_sg_id" {
+  value = aws_security_group.zookeeper.id
+  
+}

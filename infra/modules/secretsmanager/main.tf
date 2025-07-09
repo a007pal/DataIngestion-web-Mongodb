@@ -15,6 +15,7 @@ resource "aws_secretsmanager_secret_version" "zk_tls_version" {
     truststore_b64      = filebase64("${var.certs_path}-${count.index + 1}/server.truststore.jks")
     keystore_password   = "amitkeystorePassword"
     truststore_password = "amittruststorePassword"
+    key_password="amitkeysPassword"
   })
 
 }

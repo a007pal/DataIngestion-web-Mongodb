@@ -2,28 +2,27 @@ provider "aws" {
   region = var.region
 }
 module "vpc" {
-source = "./modules/vpc"
-name_prefix = var.name_prefix
-vpc_cidr =   var.vpc_cidr
-azs = var.azs
-tags = var.tags
-private_subnet_cidrs = var.private_subnet_cidrs
-public_subnet_cidrs = var.public_subnet_cidrs
-  
+  source               = "./modules/vpc"
+  name_prefix          = var.name_prefix
+  vpc_cidr             = var.vpc_cidr
+  azs                  = var.azs
+  tags                 = var.tags
+  private_subnet_cidrs = var.private_subnet_cidrs
+  public_subnet_cidrs  = var.public_subnet_cidrs
+
 }
 
-/* module "zookeeper" {
-  source               = "./modules/zookeeper"
-  ami_id              = var.ami_id
-  instance_type       = var.instance_type
-  subnet_ids          = module.vpc.private_subnet_ids
-  key_name            = var.key_name
-  sg_id               = var.sg_zookeeper
-  zookeeper_count     = var.zookeeper_count
-  keystore_password   = var.keystore_password
-  truststore_password = var.truststore_password
-  tags                = var.tags
-} */
+module "zookeeper" {
+  source          = "./modules/zookeeper"
+  zookeeper_count = var.zookeeper_count
+  ami_id          = var.ami_id
+  instance_type   = var.instance_type
+  subnet_ids      = module.vpc.private_subnet_ids
+  key_name        = var.key_name
+  sg_id           = module.vpc.sg_zookeeper_id
+  tags            = var.tags
+  environment     = var.environment
+}
 
 /* module "kafka_brokers" {
   source               = "./modules/kafka_brokers"
@@ -55,34 +54,34 @@ public_subnet_cidrs = var.public_subnet_cidrs
 } */
 
 module "lambda_producer" {
-  source            = "./modules/lambda_producer"
-  function_name     = var.lambda_function_name
-  environment       = var.environment
-  sasl_secret_arn   = var.sasl_secret_arn
-  tls_secret_arn    = var.tls_secret_arn
-  sg_lambda = [module.vpc.lambda_sg_id]
+  source             = "./modules/lambda_producer"
+  function_name      = var.lambda_function_name
+  environment        = var.environment
+  sasl_secret_arn    = var.sasl_secret_arn
+  tls_secret_arn     = var.tls_secret_arn
+  sg_lambda          = [module.vpc.lambda_sg_id]
   private_subnet_ids = module.vpc.private_subnet_ids
-  depends_on = [ module.vpc ]
+  depends_on         = [module.vpc]
 }
 
 module "apigateway" {
-  source           = "./modules/apigateway"
-  environment      = var.environment
-  audience         = var.auth0_audience
-  issuer           = var.auth0_issuer
-  tags = "${var.name_prefix}-${var.environment}-api-gateway"
+  source                   = "./modules/apigateway"
+  environment              = var.environment
+  audience                 = var.auth0_audience
+  issuer                   = var.auth0_issuer
+  tags                     = "${var.name_prefix}-${var.environment}-api-gateway"
   lambda_function_name_arn = module.lambda_producer.lambda_function_arn
-  lambda_invoke_arn = module.lambda_producer.lambda_invoke_arn
-  funtion_name = module.lambda_producer.lambda_function_name
-  depends_on = [ module.lambda_producer ]
+  lambda_invoke_arn        = module.lambda_producer.lambda_invoke_arn
+  funtion_name             = module.lambda_producer.lambda_function_name
+  depends_on               = [module.lambda_producer]
 }
 module "secretsmanager" {
-  source = "./modules/secretsmanager"
-  zk_instance_count = var.zookeeper_count
-  name_prefix = var.name_prefix
+  source                     = "./modules/secretsmanager"
+  zk_instance_count          = var.zookeeper_count
+  name_prefix                = var.name_prefix
   zookeer_secret_name_prefix = var.zookeer_secret_name_prefix
-  environment = var.environment
-  certs_path = var.certs_path_zoopkeeper
+  environment                = var.environment
+  certs_path                 = var.certs_path_zoopkeeper
 }
 
 /*  module "monitoring" {
