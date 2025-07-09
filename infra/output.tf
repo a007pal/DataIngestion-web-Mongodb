@@ -11,3 +11,8 @@ output "secrets_name" {
   description = "List of Zookeeper TLS secret names"
   
 }
+output "bastion_public_ip" {
+  value = module.bastion.bastion_public_ip
+  description = "Public IP of the bastion host for SSH access"
+  
+}

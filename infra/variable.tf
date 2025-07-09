@@ -3,6 +3,7 @@ variable "region" {
 }
 variable "name_prefix" {}
 variable "vpc_cidr" {}
+variable "allowed_ssh_cidr_bastion" {}
 variable "azs" { type = list(string) }
 variable "tags" { type = map(string) }
 
@@ -44,3 +45,7 @@ variable "zookeer_secret_name_prefix" {
 variable "certs_path_zoopkeeper" {
   type = string
 }
+variable "bastion_ami_id" {}
+  
+variable "bastion_instance_type" {}
+variable "bastion_key_name" {}

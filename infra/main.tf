@@ -9,7 +9,19 @@ module "vpc" {
   tags                 = var.tags
   private_subnet_cidrs = var.private_subnet_cidrs
   public_subnet_cidrs  = var.public_subnet_cidrs
+  allowed_ssh_cidr_bastion = var.allowed_ssh_cidr_bastion
 
+}
+module "bastion" {
+  source              = "./modules/bastion"
+  ami_id              = var.bastion_ami_id
+  instance_type       = var.bastion_instance_type
+  public_subnet_id    = module.vpc.public_subnet_ids[0]
+  key_name            = var.bastion_key_name
+  sg_bastion_id       = module.vpc.bastion_sg_id
+  name_prefix         = var.name_prefix
+  depends_on          = [module.vpc]
+  
 }
 
 module "zookeeper" {
@@ -22,6 +34,7 @@ module "zookeeper" {
   sg_id           = module.vpc.sg_zookeeper_id
   tags            = var.tags
   environment     = var.environment
+  depends_on = [ module.vpc, module.secretsmanager ]
 }
 
 /* module "kafka_brokers" {
@@ -82,6 +95,15 @@ module "secretsmanager" {
   zookeer_secret_name_prefix = var.zookeer_secret_name_prefix
   environment                = var.environment
   certs_path                 = var.certs_path_zoopkeeper
+}
+module "route53" {
+  source                  = "./modules/route53"
+  name_perfix             = var.name_prefix
+  zookeeper_privvate_ips  = module.zookeeper.zookeeper_private_ips
+  zookeeper_count         = var.zookeeper_count
+  vpc_id                  = module.vpc.vpc_id
+  environment             = var.environment
+  
 }
 
 /*  module "monitoring" {

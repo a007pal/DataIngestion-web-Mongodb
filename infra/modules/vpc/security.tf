@@ -10,6 +10,30 @@ resource "aws_security_group" "lambda" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+resource "aws_security_group" "bastion_sg" {
+  name        = "${var.name_prefix}-bastion-sg"
+  description = "Allow SSH from developer machine"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_ssh_cidr_bastion]
+    description = "SSH from your IP"
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.name_prefix}-bastion-sg"
+  }
+}
 
 resource "aws_security_group" "kafka" {
   name        = "${var.name_prefix}-kafka-sg"
@@ -35,6 +59,7 @@ resource "aws_security_group" "zookeeper" {
   description = "Security group for Zookeeper"
   vpc_id      = aws_vpc.main.id
   tags        = var.tags
+  depends_on = [ aws_security_group.bastion_sg]
 
 }
 
@@ -77,4 +102,15 @@ resource "aws_security_group_rule" "zookeeper_egress" {
   security_group_id = aws_security_group.zookeeper.id
   cidr_blocks       = ["0.0.0.0/0"]
   description       = "Allow all outbound"
+}
+
+
+resource "aws_security_group_rule" "zookeeper_ssh_from_bastion" {
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.zookeeper.id
+  source_security_group_id = aws_security_group.bastion_sg.id
+  description              = "Allow SSH from bastion host"
 }

@@ -12,3 +12,4 @@ variable "private_subnet_cidrs" {
 variable "tags" {
   type = map(string)
 }
+variable "allowed_ssh_cidr_bastion" {}
