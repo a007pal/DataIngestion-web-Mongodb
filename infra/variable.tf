@@ -45,6 +45,9 @@ variable "zookeer_secret_name_prefix" {
 variable "certs_path_zoopkeeper" {
   type = string
 }
+variable "certs_path_broker" {
+  type = string
+}
 variable "bastion_ami_id" {}
   
 variable "bastion_instance_type" {}
