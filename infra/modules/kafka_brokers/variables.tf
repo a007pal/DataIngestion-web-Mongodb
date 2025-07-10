@@ -6,7 +6,5 @@ variable "key_name" {}
 variable "sg_id" {}
 variable "tags" { type = map(string) }
 variable "name_prefix" {}
-variable "zookeeper_connect" {}
-variable "keystore_password" {}
-variable "truststore_password" {}
-variable "min_insync_replicas" { default = 2 }
+variable "environment" {}
+variable "zookeeper_connection_string" {}

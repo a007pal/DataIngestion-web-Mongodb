@@ -34,32 +34,50 @@ resource "aws_security_group" "bastion_sg" {
     Name = "${var.name_prefix}-bastion-sg"
   }
 }
-
+# kafka security group
 resource "aws_security_group" "kafka" {
   name        = "${var.name_prefix}-kafka-sg"
   description = "Security group for Lambda TO Kafka"
   vpc_id      = aws_vpc.main.id
   tags        = var.tags
-  ingress {
-    from_port       = 9093
-    to_port         = 9093
-    protocol        = "tcp"
-    security_groups = [aws_security_group.lambda.id]
-  }
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  depends_on  = [aws_security_group.bastion_sg]
 }
+resource "aws_security_group_rule" "kafka_tls_client" {
+  type              = "ingress"
+  from_port         = 9093
+  to_port           = 9093
+  protocol          = "tcp"
+  security_group_id = aws_security_group.kafka.id
+  cidr_blocks       = var.vpc_cidr
+  description       = "Secure Kafka TLS communication"
+
+}
+resource "aws_security_group_rule" "kafka_ssh_from_bastion" {
+  type                     = "ingress"
+  from_port                = 22
+  to_port                  = 22
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.kafka.id
+  source_security_group_id = aws_security_group.bastion_sg.id
+  description              = "Allow SSH from bastion host"
+}
+resource "aws_security_group_rule" "kafka_egress" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  security_group_id = aws_security_group.kafka.id
+  cidr_blocks       = ["0.0.0.0/0"]
+  description       = "Allow all outbound"
+}
+
 # security group for zookeeper
 resource "aws_security_group" "zookeeper" {
   name        = "${var.name_prefix}-zookeeper-sg"
   description = "Security group for Zookeeper"
   vpc_id      = aws_vpc.main.id
   tags        = var.tags
-  depends_on = [ aws_security_group.bastion_sg]
+  depends_on  = [aws_security_group.bastion_sg]
 
 }
 

@@ -1,36 +1,53 @@
 #!/bin/bash
-set -e
-sudo yum update -y
-sudo yum install -y java-1.8.0-openjdk wget unzip -y
+set -euo pipefail
 
-# Download Kafka
-wget https://downloads.apache.org/kafka/3.7.0/kafka_2.13-3.7.0.tgz
-mkdir -p /opt/kafka && tar -xzf kafka_2.13-3.7.0.tgz -C /opt/kafka --strip-components 1
+KAFKA_VERSION="3.7.0"
+BROKER_ID=${broker_id}
+ZK_CONNECT="${zk_connect}"
+SECRET_ID="kafka-tls-node-${BROKER_ID}"
 
-# TLS setup directory
-mkdir -p /etc/kafka/secrets
+# Step 1: Install dependencies
+yum update -y
+yum install -y java-1.8.0-openjdk wget unzip jq
 
-# Retrieve TLS certs from Secrets Manager (assumes you stored base64 encoded files)
-aws secretsmanager get-secret-value --secret-id kafka-keystore --query SecretString --output text | base64 -d > /etc/kafka/secrets/server.keystore.jks
-aws secretsmanager get-secret-value --secret-id kafka-truststore --query SecretString --output text | base64 -d > /etc/kafka/secrets/server.truststore.jks
+# Step 2: Download Kafka
+wget https://downloads.apache.org/kafka/${KAFKA_VERSION}/kafka_2.13-${KAFKA_VERSION}.tgz
+mkdir -p /opt/kafka
+tar -xzf kafka_2.13-${KAFKA_VERSION}.tgz -C /opt/kafka --strip-components 1
 
-# Create config
+# Step 3: Create required dirs
+mkdir -p /opt/kafka/secrets /opt/kafka/logs
+
+# Step 4: Fetch certs from Secrets Manager
+SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id $SECRET_ID --query SecretString --output text)
+
+echo "$SECRET_JSON" | jq -r .keystore_b64 | base64 -d > /opt/kafka/secrets/kafka.keystore.jks
+echo "$SECRET_JSON" | jq -r .truststore_b64 | base64 -d > /opt/kafka/secrets/kafka.truststore.jks
+
+KEYSTORE_PASS=$(echo "$SECRET_JSON" | jq -r .keystore_password)
+TRUSTSTORE_PASS=$(echo "$SECRET_JSON" | jq -r .truststore_password)
+KEY_PASS=$(echo "$SECRET_JSON" | jq -r .key_password)
+
+# Step 5: Update server.properties
 cat <<EOF > /opt/kafka/config/server.properties
-broker.id=${broker_id}
-listeners=SSL://0.0.0.0:9093
-advertised.listeners=SSL://$(hostname -i):9093
-log.dirs=/tmp/kafka-logs
-zookeeper.connect=${zookeeper_connect}
+broker.id=${BROKER_ID}
+log.dirs=/opt/kafka/logs
+zookeeper.connect=${ZK_CONNECT}
+
+listeners=SSL://:9093
+advertised.listeners=SSL://broker-${BROKER_ID}.internal:9093
+listener.security.protocol.map=SSL:SSL
+ssl.keystore.location=/opt/kafka/secrets/kafka.keystore.jks
+ssl.keystore.password=$KEYSTORE_PASS
+ssl.key.password=$KEY_PASS
+ssl.truststore.location=/opt/kafka/secrets/kafka.truststore.jks
+ssl.truststore.password=$TRUSTSTORE_PASS
 security.inter.broker.protocol=SSL
-ssl.keystore.location=/etc/kafka/secrets/server.keystore.jks
-ssl.keystore.password=${keystore_password}
-ssl.truststore.location=/etc/kafka/secrets/server.truststore.jks
-ssl.truststore.password=${truststore_password}
 ssl.client.auth=required
-min.insync.replicas=${min_insync_replicas}
-offset.retention.minutes=10080
-auto.leader.rebalance.enable=true
-unclean.leader.election.enable=false
+authorizer.class.name=kafka.security.authorizer.AclAuthorizer
+super.users=User:CN=admin
+allow.everyone.if.no.acl.found=false
 EOF
 
-nohup /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties > /tmp/kafka.log 2>&1 &
+# Step 6: Start Kafka
+nohup /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties > /var/log/kafka.log 2>&1 &

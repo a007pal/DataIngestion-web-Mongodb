@@ -3,11 +3,20 @@ variable "name_perfix" {
   type        = string
 
 }
-variable "zookeeper_privvate_ips" {
+variable "zookeeper_private_ips" {
   description = "values for the zookeper private ips"
   type        = list(string)
 }
 variable "zookeeper_count" {
+  description = "Number of zookeper instances"
+  type        = number
+  
+}
+variable "kafka_private_ips" {
+  description = "values for the zookeper private ips"
+  type        = list(string)
+}
+variable "kafka_count" {
   description = "Number of zookeper instances"
   type        = number
   

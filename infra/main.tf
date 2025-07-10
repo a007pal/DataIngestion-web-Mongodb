@@ -37,21 +37,21 @@ module "zookeeper" {
   depends_on      = [module.vpc, module.secretsmanager]
 }
 
-/* module "kafka_brokers" {
-  source               = "./modules/kafka_brokers"
-  ami_id              = var.ami_id
-  instance_type       = var.instance_type
-  subnet_ids          = module.vpc.private_subnet_ids
-  key_name            = var.key_name
-  sg_id               = var.sg_kafka
-  broker_count        = var.broker_count
-  zookeeper_connect   = module.zookeeper.zookeeper_connection_string
-  keystore_password   = var.keystore_password
-  truststore_password = var.truststore_password
-  min_insync_replicas = var.min_insync_replicas
-  name_prefix         = var.name_prefix
-  tags                = var.tags
-} */
+module "kafka_brokers" {
+  source        = "./modules/kafka_brokers"
+  broker_count  = var.broker_count
+  ami_id        = var.ami_id
+  instance_type = var.instance_type
+  subnet_ids    = module.vpc.private_subnet_ids
+  key_name      = var.key_name
+  sg_id         = module.vpc.sg_kafka_id
+  tags          = var.tags
+  name_prefix   = var.name_prefix
+  zookeeper_connection_string = module.zookeeper.zookeeper_connection_string
+  environment                 = var.environment
+  depends_on                  = [module.vpc, module.secretsmanager]
+
+}
 
 /* module "schema_registry" {
   source               = "./modules/schema_registry"
@@ -101,11 +101,12 @@ module "secretsmanager" {
 module "route53" {
   source                 = "./modules/route53"
   name_perfix            = var.name_prefix
-  zookeeper_privvate_ips = module.zookeeper.zookeeper_private_ips
+  zookeeper_private_ips = module.zookeeper.zookeeper_private_ips
   zookeeper_count        = var.zookeeper_count
+  kafka_private_ips      = module.kafka_brokers.kafka_private_ips
+  kafka_count            = var.broker_count
   vpc_id                 = module.vpc.vpc_id
   environment            = var.environment
-
 }
 
 /*  module "monitoring" {
