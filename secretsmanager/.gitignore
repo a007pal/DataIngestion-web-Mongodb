@@ -1,0 +1,25 @@
+# Terraform init & state
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.plan
+
+# Lock file (optional)
+.terraform.lock.hcl
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Sensitive files
+*.pem
+*.key
+*.secret
+
+# OS
+.DS_Store
+Thumbs.db

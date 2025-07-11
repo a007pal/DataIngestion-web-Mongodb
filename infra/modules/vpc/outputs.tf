@@ -22,5 +22,5 @@ output "zookeeper_sg_id" {
   
 }
 output "bastion_sg_id" {
-  value = aws_security_group.bastion.id
+  value = aws_security_group.bastion_sg.id
 }

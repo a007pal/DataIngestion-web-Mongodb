@@ -56,7 +56,7 @@ resource "aws_instance" "zookeeper" {
   }
 
   user_data = templatefile("${path.module}/user_data.sh", {
-    myid        = count.index + 1
-    server_list = join(",", [for i in range(var.zookeeper_count) : "server.${i + 1}=${aws_instance.zookeeper[i].private_ip}:2888:3888"])
+    NODE_ID        = count.index + 1
+    server_list = join(",", [for i in range(var.zookeeper_count) : "server.${i}=zk-${i}.internal:2888:3888;2281"])
   })
 }

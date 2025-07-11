@@ -31,10 +31,10 @@ module "zookeeper" {
   instance_type   = var.instance_type
   subnet_ids      = module.vpc.private_subnet_ids
   key_name        = var.key_name
-  sg_id           = module.vpc.sg_zookeeper_id
+  sg_id           = module.vpc.zookeeper_sg_id
   tags            = var.tags
   environment     = var.environment
-  depends_on      = [module.vpc, module.secretsmanager]
+  depends_on      = [module.vpc]
 }
 
 module "kafka_brokers" {
@@ -44,12 +44,12 @@ module "kafka_brokers" {
   instance_type = var.instance_type
   subnet_ids    = module.vpc.private_subnet_ids
   key_name      = var.key_name
-  sg_id         = module.vpc.sg_kafka_id
+  sg_id         = module.vpc.kafka_sg_id
   tags          = var.tags
   name_prefix   = var.name_prefix
   zookeeper_connection_string = module.zookeeper.zookeeper_connection_string
   environment                 = var.environment
-  depends_on                  = [module.vpc, module.secretsmanager]
+  depends_on                  = [module.vpc]
 
 }
 
@@ -66,7 +66,7 @@ module "kafka_brokers" {
   tags                = var.tags
 }
  */
-module "lambda_producer" {
+/* module "lambda_producer" {
   source             = "./modules/lambda_producer"
   function_name      = var.lambda_function_name
   environment        = var.environment
@@ -87,23 +87,22 @@ module "apigateway" {
   lambda_invoke_arn        = module.lambda_producer.lambda_invoke_arn
   funtion_name             = module.lambda_producer.lambda_function_name
   depends_on               = [module.lambda_producer]
-}
-module "secretsmanager" {
+} */
+/* module "secretsmanager" {
   source                     = "./modules/secretsmanager"
   zk_instance_count          = var.zookeeper_count
   broker_instance_count      = var.broker_count
   name_prefix                = var.name_prefix
-  zookeer_secret_name_prefix = var.zookeer_secret_name_prefix
   environment                = var.environment
   certs_path_zookeeper       = var.certs_path_zoopkeeper
   certs_path_broker          = var.certs_path_broker
-}
+} */
 module "route53" {
   source                 = "./modules/route53"
   name_perfix            = var.name_prefix
   zookeeper_private_ips = module.zookeeper.zookeeper_private_ips
   zookeeper_count        = var.zookeeper_count
-  kafka_private_ips      = module.kafka_brokers.kafka_private_ips
+  kafka_private_ips      = module.kafka_brokers.broker_private_ips
   kafka_count            = var.broker_count
   vpc_id                 = module.vpc.vpc_id
   environment            = var.environment

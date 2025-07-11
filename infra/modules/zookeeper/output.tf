@@ -4,7 +4,8 @@ output "zookeeper_private_ips" {
 }
 
 output "zookeeper_connection_string" {
-  value       = join(",", [for i in aws_instance.zookeeper : "${i.private_ip}:2181"])
+  #value       = join(",", [for i in aws_instance.zookeeper : "${i.private_ip}:2181"])
+  value = join(",", [for i in range(length(aws_instance.zookeeper)) : "zk-${i + 1}.internal"])
   description = "Zookeeper connection string to be used by Kafka brokers"
 }
 

@@ -37,7 +37,7 @@ resource "aws_iam_instance_profile" "kafka_profile" {
   role = aws_iam_role.kafka_ec2.name
 
 }
-resource "aws_instance" "zookeeper" {
+resource "aws_instance" "kafka" {
   count                  = var.broker_count
   ami                    = var.ami_id
   instance_type          = var.instance_type

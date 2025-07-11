@@ -48,7 +48,7 @@ resource "aws_security_group_rule" "kafka_tls_client" {
   to_port           = 9093
   protocol          = "tcp"
   security_group_id = aws_security_group.kafka.id
-  cidr_blocks       = var.vpc_cidr
+  cidr_blocks       = [var.vpc_cidr]
   description       = "Secure Kafka TLS communication"
 
 }
@@ -87,7 +87,7 @@ resource "aws_security_group_rule" "zookeeper_tls_client" {
   to_port           = 2281
   protocol          = "tcp"
   security_group_id = aws_security_group.zookeeper.id
-  cidr_blocks       = var.vpc_cidr
+  cidr_blocks       = [var.vpc_cidr]
   description       = "Allow TLS client connections to Zookeeper"
 
 }
@@ -108,7 +108,7 @@ resource "aws_security_group_rule" "zookeeper_admin" {
   to_port           = 8080
   protocol          = "tcp"
   security_group_id = aws_security_group.zookeeper.id
-  cidr_blocks       = var.vpc_cidr
+  cidr_blocks       = [var.vpc_cidr]
   description       = "ZooKeeper Admin HTTP Port (optional)"
 }
 

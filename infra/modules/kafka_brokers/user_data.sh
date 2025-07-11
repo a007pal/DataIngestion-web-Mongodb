@@ -4,16 +4,17 @@ set -euo pipefail
 KAFKA_VERSION="3.7.0"
 BROKER_ID=${broker_id}
 ZK_CONNECT="${zk_connect}"
-SECRET_ID="kafka-tls-node-${BROKER_ID}"
+SECRET_ID="kafka_tls_$${BROKER_ID}"
 
 # Step 1: Install dependencies
 yum update -y
 yum install -y java-1.8.0-openjdk wget unzip jq
 
 # Step 2: Download Kafka
-wget https://downloads.apache.org/kafka/${KAFKA_VERSION}/kafka_2.13-${KAFKA_VERSION}.tgz
+#wget https://downloads.apache.org/kafka/$${KAFKA_VERSION}/kafka_2.13-$${KAFKA_VERSION}.tgz
+wget https://archive.apache.org/dist/kafka/$${KAFKA_VERSION}/kafka_2.13-$${KAFKA_VERSION}.tgz
 mkdir -p /opt/kafka
-tar -xzf kafka_2.13-${KAFKA_VERSION}.tgz -C /opt/kafka --strip-components 1
+tar -xzf kafka_2.13-$${KAFKA_VERSION}.tgz -C /opt/kafka --strip-components 1
 
 # Step 3: Create required dirs
 mkdir -p /opt/kafka/secrets /opt/kafka/logs
@@ -30,12 +31,12 @@ KEY_PASS=$(echo "$SECRET_JSON" | jq -r .key_password)
 
 # Step 5: Update server.properties
 cat <<EOF > /opt/kafka/config/server.properties
-broker.id=${BROKER_ID}
+broker.id=$${BROKER_ID}
 log.dirs=/opt/kafka/logs
-zookeeper.connect=${ZK_CONNECT}
+zookeeper.connect=$${ZK_CONNECT}
 
 listeners=SSL://:9093
-advertised.listeners=SSL://broker-${BROKER_ID}.internal:9093
+advertised.listeners=SSL://broker-$${BROKER_ID}.internal:9093
 listener.security.protocol.map=SSL:SSL
 ssl.keystore.location=/opt/kafka/secrets/kafka.keystore.jks
 ssl.keystore.password=$KEYSTORE_PASS

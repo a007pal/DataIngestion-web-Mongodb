@@ -1,6 +1,9 @@
+provider "aws" {
+  region = var.region
+}
 resource "aws_secretsmanager_secret" "zk_tls" {
   count = var.zk_instance_count
-  name  = "${var.name_prefix}-${var.zookeer_secret_name_prefix}-${count.index + 1}"
+  name  = "${var.zookeer_secret_name_prefix}_${count.index + 1}"
   tags = {
     Name : "${var.name_prefix}-${var.zookeer_secret_name_prefix}-${count.index + 1}"
     Environment : var.environment
@@ -21,7 +24,7 @@ resource "aws_secretsmanager_secret_version" "zk_tls_version" {
 }
 resource "aws_secretsmanager_secret" "kafka_broker_tls" {
   count = var.broker_instance_count
-  name  = "${var.name_prefix}-${var.broker_secret_name_prefix}-${count.index + 1}"
+  name  = "${var.broker_secret_name_prefix}_${count.index + 1}"
   tags = {
     Name : "${var.name_prefix}-${var.broker_secret_name_prefix}-${count.index + 1}"
     Environment : var.environment
