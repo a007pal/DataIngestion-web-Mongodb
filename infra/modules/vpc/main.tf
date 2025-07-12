@@ -12,7 +12,7 @@ resource "aws_internet_gateway" "igw" {
   tags = merge(var.tags, { Name = "${var.name_prefix}-igw" })
 }
 
-resource "aws_eip" "nat" {
+/* resource "aws_eip" "nat" {
   domain = "vpc"
   tags   = var.tags
 }
@@ -21,4 +21,4 @@ resource "aws_nat_gateway" "nat" {
   subnet_id     = aws_subnet.public[0].id
   tags          = merge(var.tags, { Name = "${var.name_prefix}-nat" })
   depends_on    = [aws_internet_gateway.igw]
-}
+} */

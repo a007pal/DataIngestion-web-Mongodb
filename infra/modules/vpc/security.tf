@@ -10,6 +10,27 @@ resource "aws_security_group" "lambda" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+resource "aws_security_group" "secertmanger_endpoint_sg_id" {
+  name = "${var.name_prefix}-secmgr-sg"
+  description = "Security group for Secrets Manager Endpoint"
+  vpc_id = aws_vpc.main.id
+  tags = var.tags
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+    description = "Allow HTTPS traffic from VPC CIDR"
+
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+}
 resource "aws_security_group" "bastion_sg" {
   name        = "${var.name_prefix}-bastion-sg"
   description = "Allow SSH from developer machine"
@@ -102,6 +123,16 @@ resource "aws_security_group_rule" "zookeeper_quorum_communication" {
   description              = "Inter-node communication (ZooKeeper quorum)"
 
 }
+resource "aws_security_group_rule" "zookeeper_election" {
+  type                     = "ingress"
+  from_port                = 3888
+  to_port                  = 3888
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.zookeeper.id
+  source_security_group_id = aws_security_group.zookeeper.id
+  description              = "ZooKeeper leader election port"
+}
+
 resource "aws_security_group_rule" "zookeeper_admin" {
   type              = "ingress"
   from_port         = 8080

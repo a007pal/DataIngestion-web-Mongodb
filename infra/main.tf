@@ -1,6 +1,9 @@
 provider "aws" {
   region = var.region
 }
+module "ia_am_role" {
+  source = "./modules/imrole"
+}
 module "vpc" {
   source                   = "./modules/vpc"
   name_prefix              = var.name_prefix
@@ -10,6 +13,7 @@ module "vpc" {
   private_subnet_cidrs     = var.private_subnet_cidrs
   public_subnet_cidrs      = var.public_subnet_cidrs
   allowed_ssh_cidr_bastion = var.allowed_ssh_cidr_bastion
+  region = var.region
 
 }
 module "bastion" {
@@ -35,6 +39,8 @@ module "zookeeper" {
   tags            = var.tags
   environment     = var.environment
   depends_on      = [module.vpc]
+  profile_name    = module.ia_am_role.kafka_zookeeper_profile_name
+  region         = var.region
 }
 
 module "kafka_brokers" {
@@ -49,7 +55,9 @@ module "kafka_brokers" {
   name_prefix   = var.name_prefix
   zookeeper_connection_string = module.zookeeper.zookeeper_connection_string
   environment                 = var.environment
-  depends_on                  = [module.vpc]
+  depends_on                  = [module.vpc, module.zookeeper]
+  profile_name    = module.ia_am_role.kafka_zookeeper_profile_name
+  region         = var.region
 
 }
 
@@ -99,7 +107,7 @@ module "apigateway" {
 } */
 module "route53" {
   source                 = "./modules/route53"
-  name_perfix            = var.name_prefix
+  name_perfix            = "prop.view.tracker"
   zookeeper_private_ips = module.zookeeper.zookeeper_private_ips
   zookeeper_count        = var.zookeeper_count
   kafka_private_ips      = module.kafka_brokers.broker_private_ips

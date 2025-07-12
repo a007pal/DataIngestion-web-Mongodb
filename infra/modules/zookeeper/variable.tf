@@ -6,3 +6,5 @@ variable "key_name" {}
 variable "sg_id" {}
 variable "tags" { type = map(string) }
 variable "environment" {}
+variable "region" {}
+variable "profile_name" {}

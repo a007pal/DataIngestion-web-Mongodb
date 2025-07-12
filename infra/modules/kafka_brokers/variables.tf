@@ -8,3 +8,5 @@ variable "tags" { type = map(string) }
 variable "name_prefix" {}
 variable "environment" {}
 variable "zookeeper_connection_string" {}
+variable "region" {}
+variable "profile_name" {}

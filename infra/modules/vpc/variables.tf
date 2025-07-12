@@ -13,3 +13,4 @@ variable "tags" {
   type = map(string)
 }
 variable "allowed_ssh_cidr_bastion" {}
+variable "region" {}
